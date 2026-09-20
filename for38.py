@@ -1,0 +1,9 @@
+n = int(input('Введите значение n: '))
+total = float
+total = 0
+for i in range(1,n+1):
+    total += pow(i,n - i+1)
+    print(total)
+
+# ФИО: Цветкова Полина Анатольевна
+# Дата и время: 20.09.26 11:06
