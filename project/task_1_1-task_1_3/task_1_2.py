@@ -12,5 +12,6 @@ print("dir(mymodule) -> ", [n for n in dir(mymodule) if not n.startswith('__')])
 print("mymodule.__name__ =", mymodule.__name__)
 print("mymodule.__file__ =", mymodule.__file__)
 
-
 print("mm._helper() =", mm._helper())
+
+help(mymodule)
