@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Python Camp — мини-аналог freeCodeCamp</title>
+  <style>
+    :root { --primary: #4a90e2; --bg: #f5f7fa; --text: #333; --code-bg: #2d2d2d; --code-text: #f8f8f2; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 1rem; }
+    h1, h2 { margin-bottom: 0.5rem; }
+    .course { max-width: 900px; margin: 0 auto; }
+    .unit { border: 1px solid #ddd; border-radius: 8px; background: #fff; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+    .task-box { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    textarea { width: 100%; height: 150px; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-family: Consolas, Monaco, monospace; font-size: 14px; background: var(--code-bg); color: var(--code-text); }
+    button { padding: 0.6rem 1rem; background: var(--primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .result { margin-top: 0.5rem; padding: 0.75rem; border-radius: 6px; display: none; }
+    .ok { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    pre { margin: 0; }
+    code { font-family: Consolas, Monaco, monospace; }
+    .hint { font-size: 0.875rem; color: #666; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="course">
+    <h1>Python Camp: мини-курс в одном файле</h1>
+    <p>Интерактивные задачи с автопроверкой. Код выполняется в браузере.</p>
+
+    <!-- UNIT 1 -->
+    <div class="unit">
+      <h2>1. Основы: переменные и вывод</h2>
+      <p><b>Теория:</b> В Python переменные создаются присваиванием. <code>print()</code> выводит текст. Типы: <code>int</code>, <code>float</code>, <code>str</code>, <code>bool</code>.</p>
+      <p>Пример:</p>
+      <pre><code>name = "Алекс"
+age = 25
+print(f"Привет, {name}, тебе {age} лет.")</code></pre>
+      <div class="task-box">
+        <h3>Задача 1: Приветствие</h3>
+        <p>Напиши код, который:</p>
+        <ul>
+          <li>Создаёт переменную <code>city</code> со значением <code>"Москва"</code></li>
+          <li>Выводит фразу: <code>Я живу в [city]</code></li>
+        </ul>
+        <textarea id="task1" placeholder="Вставь сюда свой код...">city = "Москва"
+print(f"Я живу в {city}")</textarea>
+        <button onclick="runTask(1, task1Checker)">Проверить</button>
+        <div id="result1" class="result"></div>
+        <div class="hint">Подсказка: используй f-строку <code>f"Я живу в {city}"</code>.</div>
+      </div>
+    </div>
+
+    <!-- UNIT 2 -->
+    <div class="unit">
+      <h2>2. Условия и логика</h2>
+      <p><b>Теория:</b> <code>if / elif / else</code> управляют ветвлением. Операторы сравнения: <code>&gt;, &lt;, ==, !=</code>. Логика: <code>and, or, not</code>.</p>
+      <div class="task-box">
+        <h3>Задача 2: Проверка возраста</h3>
+        <p>Напиши код:</p>
+        <ul>
+          <li>Переменная <code>age</code> = 17</li>
+          <li>Если <code>age &gt;= 18</code>: вывести <code>"Доступ разрешён"</code></li>
+          <li>Иначе: вывести <code>"Доступ запрещён"</code></li>
+        </ul>
+        <textarea id="task2" placeholder="Вставь сюда свой код...">age = 17
+if age >= 18:
+    print("Доступ разрешён")
+else:
+    print("Доступ запрещён")</textarea>
+        <button onclick="runTask(2, task2Checker)">Проверить</button>
+        <div id="result2" class="result"></div>
+        <div class="hint">Проверь отступы: в Python они важны!</div>
+      </div>
+    </div>
+
+    <!-- UNIT 3 -->
+    <div class="unit">
+      <h2>3. Циклы и списки</h2>
+      <p><b>Теория:</b> <code>for</code> перебирает элементы. <code>range()</code> создаёт последовательность. Списки: <code>[1, 2, 3]</code>.</p>
+      <div class="task-box">
+        <h3>Задача 3: Сумма чисел</h3>
+        <p>Напиши код:</p>
+        <ul>
+          <li>Список <code>numbers = [3, 5, 7, 9]</code></li>
+          <li>Посчитай сумму элементов и выведи результат</li>
+        </ul>
+        <textarea id="task3" placeholder="Вставь сюда свой код...">numbers = [3, 5, 7, 9]
+total = sum(numbers)
+print(total)</textarea>
+        <button onclick="runTask(3, task3Checker)">Проверить</button>
+        <div id="result3" class="result"></div>
+        <div class="hint">Можно использовать встроенную функцию <code>sum()</code> или цикл <code>for</code>.</div>
+      </div>
+    </div>
+
+    <!-- UNIT 4 -->
+    <div class="unit">
+      <h2>4. Функции</h2>
+      <p><b>Теория:</b> Функции объявляются через <code>def</code>. Возвращают значение через <code>return</code>. Пример:</p>
+      <pre><code>def greet(name):
+    return f"Привет, {name}!"</code></pre>
+      <div class="task-box">
+        <h3>Задача 4: Функция площади</h3>
+        <p>Напиши функцию <code>area_rectangle(width, height)</code>, которая:</p>
+        <ul>
+          <li>Принимает два аргумента</li>
+          <li>Возвращает их произведение</li>
+          <li>Вызови функцию с <code>width=5, height=10</code> и выведи результат</li>
+        </ul>
+        <textarea id="task4" placeholder="Вставь сюда свой код...">def area_rectangle(width, height):
+    return width * height
+
+print(area_rectangle(5, 10))</textarea>
+        <button onclick="runTask(4, task4Checker)">Проверить</button>
+        <div id="result4" class="result"></div>
+        <div class="hint">Функция должна возвращать значение, а не печатать его внутри себя.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Простой раннер кода через Function + new Function
+    function runTask(id, checker) {
+      const code = document.getElementById(`task${id}`).value.trim();
+      const resultEl = document.getElementById(`result${id}`);
+      resultEl.className = 'result';
+      resultEl.style.display = 'block';
+
+      try {
+        const output = [];
+        const originalLog = console.log;
+        console.log = (msg) => output.push(String(msg));
+
+        // Безопасный запуск пользовательского кода
+        new Function(code)();
+
+        console.log = originalLog;
+
+        if (checker(output)) {
+          resultEl.textContent = '✅ Отлично! Задача решена.';
+          resultEl.classList.add('ok');
+        } else {
+          resultEl.textContent = '❌ Не всё верно. Проверь условия и вывод.';
+          resultEl.classList.add('fail');
+        }
+      } catch (e) {
+        console.log = console.log || originalLog;
+        resultEl.textContent = 'Ошибка в коде: ' + e.message;
+        resultEl.classList.add('fail');
+      }
+    }
+
+    // Чекеры задач
+    function task1Checker(output) {
+      return output.some(line => line.includes('Москва') && line.includes('Я живу в'));
+    }
+    function task2Checker(output) {
+      return output.length > 0 && (output[0] === 'Доступ запрещён' || output[0] === 'Доступ разрешён');
+    }
+    function task3Checker(output) {
+      return output.length > 0 && Number(output[0]) === 24;
+    }
+    function task4Checker(output) {
+      return output.length > 0 && Number(output[0]) === 50;
+    }
+  </script>
+</body>
+</html>
