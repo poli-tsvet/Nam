@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyCamp: Курс Python в браузере</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/editor/editor.main.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-sidebar: #252526;
+            --text-light: #d4d4d4;
+            --text-muted: #858585;
+            --accent: #007acc;
+            --success: #4ec9b0;
+            --border: #333333;
+        }
+        body, html { margin: 0; padding: 0; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-dark); color: var(--text-light); overflow: hidden; }
+        #app { display: grid; grid-template-columns: 350px 1fr; height: 100vh; }
+        
+        /* Левая панель: Навигация и теория */
+        #sidebar { background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        #progress-container { padding: 15px; border-bottom: 1px solid var(--border); }
+        #progress-bar { width: 100%; height: 8px; background-color: #333; border-radius: 4px; overflow: hidden; }
+        #progress-fill { height: 100%; background-color: var(--accent); width: 0%; transition: width 0.3s ease; }
+        #lessons-list { flex-grow: 1; overflow-y: auto; padding-bottom: 20px; }
+        .lesson-item { padding: 15px 20px; cursor: pointer; border-left: 3px solid transparent; transition: background 0.2s; }
+        .lesson-item:hover { background-color: #2d2d2d; }
+        .lesson-item.active { background-color: #007acc; color: white; border-left-color: var(--success); }
+        .lesson-item.completed { border-left-color: var(--success); }
+        .lesson-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .lesson-desc { font-size: 12px; color: var(--text-muted); }
+
+        /* Правая панель: Редактор и консоль */
+        #workspace { display: flex; flex-direction: column; background-color: var(--bg-dark); }
+        #editor-container { flex-grow: 1; border-bottom: 1px solid var(--border); }
+        #console { height: 200px; background-color: #121212; color: #1ad749; font-family: "Courier New", monospace; font-size: 13px; padding: 15px; overflow-y: auto; border-top: 1px solid var(--border); }
+        #console p { margin: 0 0 5px 0; white-space: pre-wrap; word-break: break-word; }
+        #controls { padding: 10px 20px; background-color: #252526; border-top: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        button { background-color: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+        button:hover { background-color: #005a9e; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        #reset-btn { background-color: #4d4d4d; }
+        #reset-btn:hover { background-color: #6b6b6b; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div id="progress-container">
+            <div>Прогресс: <span id="progress-text">0%</span></div>
+            <div id="progress-bar"><div id="progress-fill"></div></div>
+        </div>
+        <div id="lessons-list"></div>
+    </div>
+
+    <!-- Workspace -->
+    <div id="workspace">
+        <div id="editor-container"></div>
+        <div id="controls">
+            <div>
+                <button id="run-btn">▶ Выполнить код</button>
+                <button id="reset-btn">🔄 Сбросить код</button>
+            </div>
+            <div id="lesson-indicator"></div>
+        </div>
+        <div id="console"></div>
+    </div>
+</div>
+
+<!-- Monaco Editor CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+
+<script>
+// === БАЗА ДАННЫХ КУРСА ===
+const lessons = [
+    {
+        id: 0, title: "Переменные и типы данных", 
+        desc: "Как хранить информацию в Python. Числа, строки и булевы значения.",
+        initialCode: `# В Python не нужно объявлять тип переменной
+name = "Алексей"
+age = 25
+height = 1.85
+is_student = True
+
+print("Имя:", name)
+print("Тип возраста:", type(age))
+print("Рост:", height)`
+    },
+    {
+        id: 1, title: "Ввод и вывод", 
+        desc: "Функции print() и input(). Как общаться с пользователем.",
+        initialCode: `# input() всегда возвращает строку
+user_name = input("Как тебя зовут? ")
+age = int(input("Сколько тебе лет? "))
+
+print(f"Привет, {user_name}!")
+print("Через 5 лет тебе будет:", age + 5)`
+    },
+    {
+        id: 2, title: "Условные операторы", 
+        desc: "if, elif, else. Как программа принимает решения.",
+        initialCode: `number = int(input("Введите число: "))
+
+if number > 0:
+    print("Число положительное")
+elif number < 0:
+    print("Число отрицательное")
+else:
+    print("Это ноль")`
+    },
+    {
+        id: 3, title: "Списки (Lists)", 
+        desc: "Хранение множества данных в одной переменной.",
+        initialCode: `fruits = ["яблоко", "банан", "груша"]
+fruits.append("апельсин")
+
+print("Второй фрукт:", fruits[1])
+print("Весь список:", fruits)
+print("Количество фруктов:", len(fruits))`
+    },
+    {
+        id: 4, title: "Циклы for и while", 
+        desc: "Автоматизация повторяющихся действий.",
+        initialCode: `# Цикл for для перебора списка
+for i in range(5):
+    print(f"Итерация номер {i}")
+
+# Цикл while
+counter = 0
+while counter < 3:
+    print("Счетчик:", counter)
+    counter += 1`
+    },
+    {
+        id: 5, title: "Функции", 
+        desc: "Переиспользуемые блоки кода с помощью def.",
+        initialCode: `def greet(name, age):
+    print(f"Привет, {name}! Тебе {age} лет.")
+
+greet("Мария", 30)
+greet("Иван", 22)`
+    },
+    {
+        id: 6, title: "Словари (Dictionaries)", 
+        desc: "Ключ-значение. Идеально для хранения профилей.",
+        initialCode: `user = {
+    "login": "ivan_petrov",
+    "email": "ivan@mail.ru",
+    "active": True
+}
+
+print("Логин:", user["login"])
+print("Email:", user.get("email", "не указан"))
+
+# Добавление нового поля
+user["score"] = 1500
+print(user)`
+    },
+    {
+        id: 7, title: "Обработка ошибок", 
+        desc: "Конструкция try...except. Как не дать программе упасть.",
+        initialCode: `while True:
+    try:
+        num = int(input("Введите число для деления на 2: "))
+        result = 10 / num
+        print("Результат:", result)
+        break
+    except ValueError:
+        print("Ошибка: Введите именно число.")
+    except ZeroDivisionError:
+        print("Ошибка: На ноль делить нельзя.")`
+    },
+    {
+        id: 8, title: "Чтение файлов", 
+        desc: "Работа с файловой системой.",
+        initialCode: `# Внимание: этот код не создаст файл на вашем ПК, 
+# так как мы в браузере. Но синтаксис верный.
+# Для теста просто выполним чтение из несуществующего файла.
+
+try:
+    with open("data.txt", "r", encoding="utf-8") as f:
+        content = f.read()
+        print(content)
+except FileNotFoundError:
+    print("Файл data.txt не найден. В реальном Python он создался бы на диске.")`
+    },
+    {
+        id: 9, title: "Финальный проект: Калькулятор", 
+        desc: "Собираем все знания вместе. Простой калькулятор в консоли.",
+        initialCode: `def add(a, b): return a + b
+def sub(a, b): return a - b
+def mul(a, b): return a * b
+def div(a, b): return a / b if b != 0 else "Ошибка!"
+
+print("Добро пожаловать в консольный калькулятор!")
+
+while True:
+    print("\n1. Сложение\n2. Вычитание\n3. Умножение\n4. Деление\n5. Выход")
+    choice = input("Выберите действие (1-5): ")
+
+    if choice == "5":
+        print("До свидания!")
+        break
+        
+    if choice in ["1", "2", "3", "4"]:
+        x = float(input("Первое число: "))
+        y = float(input("Второе число: "))
+        
+        if choice == "1": print("Результат:", add(x, y))
+        elif choice == "2": print("Результат:", sub(x, y))
+        elif choice == "3": print("Результат:", mul(x, y))
+        elif choice == "4": print("Результат:", div(x, y))
+    else:
+        print("Неверный выбор. Попробуйте снова.")`
+    }
+];
+
+// === ЛОГИКА ПРИЛОЖЕНИЯ ===
+const state = {
+    currentLesson: 0,
+    completed: new Set(JSON.parse(localStorage.getItem('pycampCompleted') || '[]'))
+};
+
+let editor;
+let monaco;
+
+// Загрузка Monaco
+require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+require(['vs/editor/editor.main'], function() {
+    monaco = window.monaco;
+    editor = monaco.editor.create(document.getElementById('editor-container'), {
+        value: lessons[state.currentLesson].initialCode,
+        language: 'python',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 15
+    });
+    render();
+});
+
+// Рендеринг интерфейса
+function render() {
+    renderLessons();
+    renderEditor();
+    updateProgress();
+    document.getElementById('lesson-indicator').innerText = `Урок ${state.currentLesson + 1} из ${lessons.length}: ${lessons[state.currentLesson].title}`;
+}
+
+function renderLessons() {
+    const list = document.getElementById('lessons-list');
+    list.innerHTML = '';
+    lessons.forEach(lesson => {
+        const item = document.createElement('div');
+        item.className = 'lesson-item ' + (lesson.id === state.currentLesson ? 'active ' : '') + (state.completed.has(lesson.id) ? 'completed' : '');
+        item.innerHTML = `
+            <div class="lesson-title">${lesson.title}</div>
+            <div class="lesson-desc">${lesson.desc}</div>
+        `;
+        item.onclick = () => {
+            // Сохраняем код текущего урока перед переключением
+            lessons[state.currentLesson].currentCode = editor.getValue();
+            state.currentLesson = lesson.id;
+            render();
+        };
+        list.appendChild(item);
+    });
+}
+
+function renderEditor() {
+    if (editor) {
+        const savedCode = lessons[state.currentLesson].currentCode;
+        const codeToShow = savedCode ? savedCode : lessons[state.currentLesson].initialCode;
+        editor.setValue(codeToShow);
+    }
+}
+
+function updateProgress() {
+    const percent = (state.completed.size / lessons.length) * 100;
+    document.getElementById('progress-fill').style.width = percent + '%';
+    document.getElementById('progress-text').innerText = Math.round(percent) + '%';
+    localStorage.setItem('pycampCompleted', JSON.stringify([...state.completed]));
+}
+
+// === ЭМУЛЯТОР КОНСОЛИ ===
+function runCode() {
+    const consoleEl = document.getElementById('console');
+    consoleEl.innerHTML = '';
+    
+    const userCode = editor.getValue();
+    
+    // Простой эмулятор: ищем print() и выводим то, что внутри
+    // Это НЕ выполнение Python, а лишь визуализация для обучения
+    const printRegex = /print$(.*?)$/g;
+    let match;
+    let outputLines = [];
+
+    // Проверка на синтаксические ошибки (базовая)
+    if (userCode.trim() === '') {
+        printToConsole("Код пуст. Напишите что-нибудь и попробуйте снова.");
+        return;
+    }
+
+    // Ищем все print
+    while ((match = printRegex.exec(userCode)) !== null) {
+        let content = match[1].trim();
+        // Убираем кавычки, если print выводит просто строку
+        if ((content.startsWith('"') && content.endsWith('"')) || (content.startsWith("'") && content.endsWith("'"))) {
+            content = content.slice(1, -1);
+        }
+        // Обработка f-строк (очень упрощенно)
+        if (content.includes('${')) {
+            content = content.replace(/\$\{(.*?)\}/g, (full, inner) => {
+                // Пытаемся вычислить выражение (ОЧЕНЬ ОПАСНО, но для демо в браузере сойдет)
+                try {
+                    return eval(inner);
+                } catch {
+                    return full;
+                }
+            });
+        }
+        outputLines.push(content);
+    }
+
+    if (outputLines.length > 0) {
+        outputLines.forEach(line => printToConsole(line));
+    } else {
+        // Если print нет, выводим заглушку
+        printToConsole("[Код выполнен. Функция print() не обнаружена в коде.]");
+    }
+
+    // Отмечаем урок как пройденный
+    state.completed.add(state.currentLesson);
+    if (state.currentLesson === lessons.length - 1) {
+        alert('🎉 Поздравляем! Вы прошли весь курс PyCamp!');
+    }
+    render();
+}
+
+function printToConsole(text) {
+    const consoleEl = document.getElementById('console');
+    const p = document.createElement('p');
+    p.innerText = text;
+    consoleEl.appendChild(p);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+function resetCode() {
+    if (confirm('Сбросить код текущего урока к исходному состоянию?')) {
+        editor.setValue(lessons[state.currentLesson].initialCode);
+        lessons[state.currentLesson].currentCode = undefined;
+    }
+}
+
+// === ОБРАБОТЧИКИ СОБЫТИЙ ===
+document.getElementById('run-btn').addEventListener('click', runCode);
+document.getElementById('reset-btn').addEventListener('click', resetCode);
+
+// Горячие клавиши: Ctrl+Enter или Cmd+Enter
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runCode();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        resetCode();
+    }
+});
+</script>
+
+</body>
+</html>
